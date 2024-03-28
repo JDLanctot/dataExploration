@@ -29,18 +29,20 @@ def fill_missing_values(df: pd.DataFrame, num_strategy: str = 'median', cat_stra
     # FOR NUMERIC COLUMNS FILL WITH VALUES BASED ON STRATEGY INPUT
     num_imputer = SimpleImputer(strategy=num_strategy)
     num_columns = df.select_dtypes(include=[np.number]).columns
-    df[num_columns] = num_imputer.fit_transform(df[num_columns])
+    if len(num_columns) > 0:
+        df[num_columns] = num_imputer.fit_transform(df[num_columns])
 
     # Categorical columns: Fill with most frequent value
     cat_imputer = SimpleImputer(strategy=cat_strategy)
     cat_columns = df.select_dtypes(include=["object", "category"]).columns
-    df[cat_columns] = cat_imputer.fit_transform(df[cat_columns])
+    if len(cat_columns) > 0:
+        df[cat_columns] = cat_imputer.fit_transform(df[cat_columns])
 
     return df
 
-def encode_categories(df: pd.DataFrame, sparse: bool = True) -> pd.DataFrame:
+def encode_categories(df: pd.DataFrame, sparse: bool = False) -> pd.DataFrame:
     # CONVERT THE CATEGORICAL VALUES TO TYPES WE CAN USE FOR ML
-    # NEED TO SPARSE AS AN OPTION TO AVOID MEMORY OVERFLOW
+    # NEED TO SPARSE AS AN OPTION TO AVOID MEMORY OVERFLOW IN SOME CASES
     df = pd.get_dummies(df, drop_first=True, sparse=sparse)
     return df
 
@@ -57,8 +59,7 @@ def prep_data(df: pd.DataFrame, colname: str, cols: List[str] = []) -> pd.DataFr
     if cols != []:
         df = drop_unneeded_columns(df, cols)
     df = fill_missing_values(df)
-    df = encode_categories(df, sparse=True)
+    df = encode_categories(df, sparse=False)
     # df = scale_features(df, colname)
     return df
-
 

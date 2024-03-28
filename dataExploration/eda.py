@@ -8,9 +8,9 @@ __all__.extend([
 def explore_data(df: pd.DataFrame) -> None:
     # DROP THE ID COLUMN WHEN EXPLORING THE DATA, THIS WON'T EFFECT THE DF OUTSIDE OF THIS SCOPE
     df = df.drop(['id'], axis=1)
-    df = df.head(100) # UNCOMMENT THIS LINE TO TEST ON A SUBSET OF THE DATA FOR SPEED
 
     # PRINT SAMPLE
+    print('-'*90)
     print('Here is a sample of the data:')
     print(df.head())
 
@@ -28,9 +28,10 @@ def explore_data(df: pd.DataFrame) -> None:
     cat_col = df.select_dtypes(include=['category'])
     for col in cat_col:
         print('Unique Values of {} are \n'.format(col),df[col].unique())
-        print('*'*90)
+        print('-'*90)
 
     # PRINT DESCRIPTIVES
     print('Here are the descriptives of the dataset:')
     print(df.describe(include='all').T)
+
 
