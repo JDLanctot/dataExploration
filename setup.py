@@ -13,6 +13,7 @@ install_requires = ['numpy',
                     'pandas',
                     'pyyaml',
                     'seaborn',
+                    'statsmodels',
                     'tslearn',
                     'tqdm']
 

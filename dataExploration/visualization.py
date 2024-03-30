@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import learning_curve
 from typing import Tuple, List, Union
-from dataExploration.feature_engineering import density_lookup
+from dataExploration.feature_engineering import density_lookup, examine_correlations
 import seaborn as sns
+import statsmodels.api as sm
 
 __all__ = []
 __all__.extend([
@@ -16,7 +17,8 @@ __all__.extend([
     'histogram_boxplot',
     'perc_on_bar',
     'visualize',
-    'plot_learning_curves'
+    'plot_learning_curves',
+    'plot_regression'
 ])
 
 def plot_numeric_features_vs_log_price(df: pd.DataFrame, colname: str, num_columns: List[str]) -> None:
@@ -93,21 +95,24 @@ def plot_geospatial_heatmap(df: pd.DataFrame, colname: str, lat_col: str = 'lati
 
     return density, lat_bins, lon_bins
 
-def histogram_boxplot(feature, figsize=(10,8), bins = None):
+def histogram_boxplot(feature, title="Distribution and Boxplot", figsize=(10,8), bins=None):
     """ Boxplot and histogram combined
-    feature: 1-d feature array
-    figsize: size of fig (default (9,8))
+    feature: 1-d feature array (pandas Series)
+    figsize: size of fig (default (10,8))
     bins: number of bins (default None / auto)
     """
-    f2, (ax_box2, ax_hist2) = plt.subplots(nrows = 2, # Number of rows of the subplot grid= 2
-                                           sharex = True, # x-axis will be shared among all subplots
-                                           gridspec_kw = {"height_ratios": (.25, .75)},
-                                           figsize = figsize
+    f2, (ax_box2, ax_hist2) = plt.subplots(nrows=2, # Number of rows of the subplot grid= 2
+                                           sharex=True, # x-axis will be shared among all subplots
+                                           gridspec_kw={"height_ratios": (.25, .75)},
+                                           figsize=figsize
                                            ) # creating the 2 subplots
-    sns.boxplot(feature, ax=ax_box2, showmeans=True, color='violet') # boxplot will be created and a star will indicate the mean value of the column
-    sns.distplot(feature, kde=F, ax=ax_hist2, bins=bins,color = 'orange') if bins else sns.distplot(feature, kde=False, ax=ax_hist2,color='tab:cyan') # For histogram
-    ax_hist2.axvline(np.mean(feature), color='purple', linestyle='--') # Add mean to the histogram
-    ax_hist2.axvline(np.median(feature), color='black', linestyle='-') # Add median to the histogram
+    sns.boxplot(x=feature, ax=ax_box2, orient='h', showmeans=True, color='violet') # Corrected boxplot call
+    sns.histplot(feature, kde=False, ax=ax_hist2, bins=bins, color='orange') if bins else sns.histplot(feature, kde=False, ax=ax_hist2, color='tab:cyan') # Corrected histplot call
+    ax_hist2.axvline(np.mean(feature), color='purple', linestyle='--', label='Mean') # Add mean to the histogram
+    ax_hist2.axvline(np.median(feature), color='black', linestyle='-', label='Median') # Add median to the histogram
+    ax_hist2.legend() # Show the legend
+
+    f2.suptitle(title) # Adding a title to the figure
 
 def perc_on_bar(df: pd.DataFrame, z: str) -> None:
     '''
@@ -127,20 +132,22 @@ def perc_on_bar(df: pd.DataFrame, z: str) -> None:
         ax.annotate(percentage, (x, y), size = 12) # annotate the percantage
     plt.show() # show the plot
 
-def visualize(df: pd.DataFrame, colname: str, num_columns: List[str], cat_columns: List[str], return_corr: bool = True) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+def visualize(df: pd.DataFrame, cols: List[str], num_columns: List[str], cat_columns: List[str], return_corr: bool = True) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
     df.hist(figsize=(20,15))
-    histogram_boxplot(data[colname])
+    for i,c in enumerate(cols):
+        histogram_boxplot(df[c], title=f'Distribution and Boxplot of {c}')
     if len(num_columns) > 0:
-        plot_numeric_features_vs_log_price(df, colname, num_columns)
+        plot_numeric_features_vs_log_price(df, cols[0], num_columns)
     if len(cat_columns) > 0:
-        plot_categorical_features_vs_log_price(df, colname, cat_columns)
-    density, lat_bins, lon_bins = plot_geospatial_heatmap(df, colname, weighted=True)
+        plot_categorical_features_vs_log_price(df, cols[0], cat_columns)
 
     # LET'S SAVE THE DENSITY AS A NEW FEATURE TO INCLUDE IN THE CORRELATION
-    df['density'] = df.apply(lambda row: density_lookup(density, lat_bins, lon_bins, row['latitude'], row['longitude']), axis=1)
-    df = df.drop(['latitude', 'longitude'], axis=1)
+    # density, lat_bins, lon_bins = plot_geospatial_heatmap(df, colname, weighted=True)
+    # df['density'] = df.apply(lambda row: density_lookup(density, lat_bins, lon_bins, row['latitude'], row['longitude']), axis=1)
+    # df = df.drop(['latitude', 'longitude'], axis=1)
+
     if return_corr:
-        corr_matrix = examine_correlations(df, colname)
+        corr_matrix = examine_correlations(df, cols[0])
         plot_correlation_heatmap(corr_matrix)
         return df, corr_matrix
     else:
@@ -161,4 +168,24 @@ def plot_learning_curves(model: LinearRegression, X: Union[pd.DataFrame, np.ndar
     plt.title('Learning curves', fontsize=18, y=1.03)
     plt.legend()
     plt.ylim(0,3)
+
+def plot_regression(x, y, x_label, y_label, group_label=None):
+        # Fit regression model
+        X = sm.add_constant(x)  # Add an intercept to our model
+        model = sm.OLS(y, X).fit()
+
+        # Make predictions
+        predictions = model.predict(X)
+
+        # Plotting
+        plt.scatter(x, y, alpha=0.5, label=group_label)  # Original data points
+        plt.plot(x, predictions, color='red')  # Regression line
+        plt.title(f'Linear Regression: {y_label} vs. {x_label}')
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.legend()
+        plt.show()
+
+        # Print out the statistics
+        print(model.summary())
 

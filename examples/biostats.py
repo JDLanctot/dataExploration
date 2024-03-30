@@ -7,8 +7,8 @@ from simple_parsing import field, ArgumentParser
 
 import numpy as np
 from dataExploration.utils import import_data, set_seed, filter_data
-from dataExploration.eda import explore_data
-from dataExploration.processing import clean_string_column, prep_data
+from dataExploration.eda import explore_data, compare_means, compare_means_anova, check_normality, calculate_correlation, perform_regression_and_plot
+from dataExploration.processing import clean_string_column, prep_data, remove_outliers
 from dataExploration.visualization import visualize
 from dataExploration.feature_engineering import remove_highly_correlated_features, feature_importance_from_model, add_per_col
 from dataExploration.training import run_train, evaluate_model
@@ -39,10 +39,15 @@ def main(config_file: str, input_file:str, output_file: str, seed: int = None):
     # File locations and parameters
     hp = HyperParams.load(Path(os.getcwd() + config_file))
     colname = hp.colname
+    y_col = hp.y_col
     cols_to_drop = hp.cols_to_drop
     per_colname = hp.per_colname
     per_cols = hp.per_cols
     keep = hp.keep
+    sample_size = hp.sample_size
+    compare_col = hp.compare_col
+    compare_vals = hp.compare_vals
+    compare_labels = hp.compare_labels
 
     # SIMPLE STRING CLEAN UP AND EXPLORATION
     df = df.apply(clean_string_column)
@@ -52,19 +57,32 @@ def main(config_file: str, input_file:str, output_file: str, seed: int = None):
 
     # CLEAN THE DATA
     df = prep_data(df, colname, cols_to_drop)
+    df = remove_outliers(df, [colname, y_col])
+
+    # SAMPLE THE DATA
+    # df = df.sample(sample_size)
+
+    # COMPARE THE GROUPS
+    if compare_labels[0] != '':
+        compare_means(df, colname, compare_col, compare_vals, compare_labels)
+        compare_means_anova(df, colname, compare_col, compare_vals, compare_labels)
+        check_normality(df, colname, y_col, compare_col, compare_vals, compare_labels)
+        calculate_correlation(df, colname, y_col, compare_col, compare_vals, compare_labels)
+        perform_regression_and_plot(df, colname, y_col, compare_col, compare_vals, compare_labels)
 
     # ADD SOME EXTRA FEATURES BEFORE PRECEDING
-    for c in per_cols:
-        df = add_per_col(df, c, per_colname)
+    if per_cols[0] != '':
+        for c in per_cols:
+            df = add_per_col(df, c, per_colname)
 
     # GET THE TYPES OF COLUMNS OF EACH TYPE FOR VISUALIZATION
-    num_columns = df.select_dtypes(include=[np.number]).columns.drop('log_price').tolist()
+    num_columns = df.select_dtypes(include=[np.number]).columns.drop(colname).tolist()
     cat_columns = df.select_dtypes(include=['object', 'category']).columns.tolist()
 
     # VISUALIZATIONS
     print('-'*90)
     print('Here are our correlation results:')
-    df, corr_matrix = visualize(df, colname, num_columns, cat_columns, return_corr=True)
+    df, corr_matrix = visualize(df, [colname, y_col], num_columns, cat_columns, return_corr=True)
 
     # REMOVE HIGHLY CORRELATED COLUMNS FROM BEFORE TRAINING
     if type(corr_matrix) != None:
@@ -72,29 +90,29 @@ def main(config_file: str, input_file:str, output_file: str, seed: int = None):
         print(f"Dropped Features due to high correlation: {dropped_features}")
 
     # RUN TRAINING
-    model_str = "forrest"
-    if model_str == "lasso":
-        model_type = "LassoCV"
-    elif model_str == "forrest":
-        model_type = "RandomForestRegressor"
-    elif model_str == "tree":
-        model_type = "DecisionTreeRegressor"
-    else:
-        model_type = "LinearRegression"
-
-    model, train_set, test_set  = run_train(df, colname, type=model_str)
+    # model_str = "forrest"
+    # if model_str == "lasso":
+    #     model_type = "LassoCV"
+    # elif model_str == "forrest":
+    #     model_type = "RandomForestRegressor"
+    # elif model_str == "tree":
+    #     model_type = "DecisionTreeRegressor"
+    # else:
+    #     model_type = "LinearRegression"
+    #
+    # model, train_set, test_set  = run_train(df, colname, type=model_str)
 
     # SEE HOW THE MODEL RELATES TO THE FEATURES
-    feature_names = [col for col in train_set.columns if col != 'log_price']
-    importance = feature_importance_from_model(model, feature_names)
-    print('-'*90)
-    print('Here are our importance results:')
-    print(importance)
+    # feature_names = [col for col in train_set.columns if col != 'log_price']
+    # importance = feature_importance_from_model(model, feature_names)
+    # print('-'*90)
+    # print('Here are our importance results:')
+    # print(importance)
 
     # EVALUATE THE MODEL
-    evaluate_model(model, train_set, test_set, colname)
-    print('-'*90)
-    print(f'Here we have used the {model_type} model to make a model which predicts the {colname} based on a number of features within our dataset. Specifically, we have feature engineered lattitude and longitude to be combined into a density heatmap weighted by {colname} and used that new feature within our model to improve the results obtained by the example data pipeline. Additionally, we have made it possible to run our script via CLI which could be useful in automated pipelines. To improve this, we could accept command line arguments for the filename, column name which should be predicted, and which model should be used, and instead of showing plots, save them as files so no popup is generated -- thereby pausing the script until a user closes the figure. Lastly, I added type safety to all of the function arguments and returns to make sure some potential bugs can be caught through linting.')
+    # evaluate_model(model, train_set, test_set, colname)
+    # print('-'*90)
+    # print(f'Here we have used the {model_type} model to make a model which predicts the {colname} based on a number of features within our dataset. Specifically, we have feature engineered lattitude and longitude to be combined into a density heatmap weighted by {colname} and used that new feature within our model to improve the results obtained by the example data pipeline. Additionally, we have made it possible to run our script via CLI which could be useful in automated pipelines. To improve this, we could accept command line arguments for the filename, column name which should be predicted, and which model should be used, and instead of showing plots, save them as files so no popup is generated -- thereby pausing the script until a user closes the figure. Lastly, I added type safety to all of the function arguments and returns to make sure some potential bugs can be caught through linting.')
 
 if __name__ == "__main__":
     parser = ArgumentParser(add_dest_to_option_strings=False,

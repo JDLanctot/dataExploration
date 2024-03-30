@@ -31,8 +31,11 @@ def set_mpl() -> None:
     mpl.rc('axes', linewidth=1, edgecolor="#222222", labelcolor="#222222")
     mpl.rc('text', usetex=False, color="#222222")
 
-def import_data(filename: str) -> pd.DataFrame:
-    return pd.read_csv(filename)
+def import_data(filename: str, index_col: Union[int, None] = None) -> pd.DataFrame:
+    if index_col is not None:
+        return pd.read_csv(filename, index_col=index_col)
+    else:
+        return pd.read_csv(filename)
 
 def filter_data(df: pd.DataFrame, colname: str, keep: Union[float, bool, str]) -> pd.DataFrame:
     return df[df[colname] == keep]

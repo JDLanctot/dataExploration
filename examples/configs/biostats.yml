@@ -1,5 +1,10 @@
-colname: 'log_price'
-cols_to_drop: ['id', 'amenities', 'description', 'first_review', 'host_has_profile_pic', 'host_response_rate', 'host_since', 'last_review', 'name', 'city', 'neighbourhood', 'property_type', 'room_type', 'thumbnail_url', 'zipcode'] #, 'bed_type', 'host_identity_verified', 'instant_bookable', 'cancellation_policy'
-per_colname: 'accommodates'
-per_cols: ['beds', 'bedrooms']
+colname: 'creat_68'
+y_col: 'creat_72'
+cols_to_drop: ['id']
+per_colname: ''
+per_cols: ['', '']
 keep: ''
+sample_size: 300
+compare_col: 'group'
+compare_vals: [1, 2, 3]
+compare_labels: ['Visit 1', 'Visit 2', 'Visit 3']

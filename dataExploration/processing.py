@@ -10,7 +10,8 @@ __all__.extend([
     'drop_unneeded_columns',
     'fill_missing_values',
     'scale_features',
-    'prep_data'
+    'prep_data',
+    'remove_outliers'
 ])
 
 def clean_string_column(s: pd.Series) -> pd.Series:
@@ -61,5 +62,22 @@ def prep_data(df: pd.DataFrame, colname: str, cols: List[str] = []) -> pd.DataFr
     df = fill_missing_values(df)
     df = encode_categories(df, sparse=False)
     # df = scale_features(df, colname)
+    return df
+
+def remove_outliers(df, cols=None):
+    if cols is None:
+        # If no columns are specified, apply to all numeric columns
+        cols = df.select_dtypes(include=['number']).columns
+
+    for col in cols:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        # Filter out outliers
+        df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+
     return df
 
