@@ -3,12 +3,14 @@ import matplotlib as mpl
 import numpy as np
 import random
 import os
+from typing import Union
 
 __all__ = []
 __all__.extend([
     'set_seed',
     'set_mpl',
-    'import_data'
+    'import_data',
+    'filter_data'
 ])
 
 def set_seed(seed):
@@ -32,4 +34,6 @@ def set_mpl() -> None:
 def import_data(filename: str) -> pd.DataFrame:
     return pd.read_csv(filename)
 
+def filter_data(df: pd.DataFrame, colname: str, keep: Union[float, bool, str]) -> pd.DataFrame:
+    return df[df[colname] == keep]
 

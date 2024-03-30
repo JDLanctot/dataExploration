@@ -5,6 +5,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import learning_curve
 from typing import Tuple, List, Union
 from dataExploration.feature_engineering import density_lookup
+import seaborn as sns
 
 __all__ = []
 __all__.extend([
@@ -12,6 +13,8 @@ __all__.extend([
     'plot_categorical_features_vs_log_price',
     'plot_correlation_heatmap',
     'plot_geospatial_heatmap',
+    'histogram_boxplot',
+    'perc_on_bar',
     'visualize',
     'plot_learning_curves'
 ])
@@ -90,7 +93,43 @@ def plot_geospatial_heatmap(df: pd.DataFrame, colname: str, lat_col: str = 'lati
 
     return density, lat_bins, lon_bins
 
+def histogram_boxplot(feature, figsize=(10,8), bins = None):
+    """ Boxplot and histogram combined
+    feature: 1-d feature array
+    figsize: size of fig (default (9,8))
+    bins: number of bins (default None / auto)
+    """
+    f2, (ax_box2, ax_hist2) = plt.subplots(nrows = 2, # Number of rows of the subplot grid= 2
+                                           sharex = True, # x-axis will be shared among all subplots
+                                           gridspec_kw = {"height_ratios": (.25, .75)},
+                                           figsize = figsize
+                                           ) # creating the 2 subplots
+    sns.boxplot(feature, ax=ax_box2, showmeans=True, color='violet') # boxplot will be created and a star will indicate the mean value of the column
+    sns.distplot(feature, kde=F, ax=ax_hist2, bins=bins,color = 'orange') if bins else sns.distplot(feature, kde=False, ax=ax_hist2,color='tab:cyan') # For histogram
+    ax_hist2.axvline(np.mean(feature), color='purple', linestyle='--') # Add mean to the histogram
+    ax_hist2.axvline(np.median(feature), color='black', linestyle='-') # Add median to the histogram
+
+def perc_on_bar(df: pd.DataFrame, z: str) -> None:
+    '''
+    plot
+    feature: categorical feature
+    the function won't work if a column is passed in hue parameter
+    '''
+
+    total = len(df[z]) # length of the column
+    plt.figure(figsize=(15,5))
+    ax = sns.countplot(df[z],palette='Paired')
+    for p in ax.patches:
+        percentage = '{:.1f}%'.format(100 * p.get_height()/total) # percentage of each class of the category
+        x = p.get_x() + p.get_width() / 2 - 0.05 # width of the plot
+        y = p.get_y() + p.get_height()           # hieght of the plot
+
+        ax.annotate(percentage, (x, y), size = 12) # annotate the percantage
+    plt.show() # show the plot
+
 def visualize(df: pd.DataFrame, colname: str, num_columns: List[str], cat_columns: List[str], return_corr: bool = True) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+    df.hist(figsize=(20,15))
+    histogram_boxplot(data[colname])
     if len(num_columns) > 0:
         plot_numeric_features_vs_log_price(df, colname, num_columns)
     if len(cat_columns) > 0:
