@@ -9,7 +9,7 @@ from typing import Tuple, List, Union
 __all__ = []
 __all__.extend([
     'density_lookup',
-    'add_per_accommodates',
+    'add_per_col',
     'examine_correlations',
     'remove_highly_correlated_features',
     'feature_importance_from_model'
@@ -23,8 +23,8 @@ def density_lookup(density: np.ndarray, lat_bins: np.ndarray, lon_bins: np.ndarr
     lon_idx = min(lon_idx, density.shape[1] - 1)
     return density[lat_idx, lon_idx]
 
-def add_per_accommodates(df: pd.DataFrame, colname: str) -> pd.DataFrame:
-    df[f'{colname}_per_accommodates'] = df[colname] / df['accommodates']
+def add_per_col(df: pd.DataFrame, colname: str, per_colname) -> pd.DataFrame:
+    df[f'{colname}_per_{per_colname}'] = df[colname] / df[per_colname]
     # df = df.drop(colname, axis=1)
     return df
 

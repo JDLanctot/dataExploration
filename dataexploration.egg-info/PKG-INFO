@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: dataexploration
+Version: 0.0.0
+Summary: Data Exploration Library
+Author: Jordan D. Lanctot
+Author-email: jordan.lanctot@torontomu.ca
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: more-itertools
+Requires-Dist: scipy
+Requires-Dist: pandas
+Requires-Dist: pyyaml
+Requires-Dist: tslearn
+Requires-Dist: tqdm

@@ -1,0 +1,7 @@
+numpy
+more-itertools
+scipy
+pandas
+pyyaml
+tslearn
+tqdm

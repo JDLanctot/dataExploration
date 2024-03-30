@@ -1,11 +1,20 @@
 import pandas as pd
 import matplotlib as mpl
+import numpy as np
+import random
+import os
 
 __all__ = []
 __all__.extend([
+    'set_seed',
     'set_mpl',
     'import_data'
 ])
+
+def set_seed(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
 def set_mpl() -> None:
     # change defaults to be less ugly for matplotlib
